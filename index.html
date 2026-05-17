@@ -384,6 +384,56 @@
       grid-column: 1 / -1;
     }
 
+    /* ── Pagination ── */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin-top: 36px;
+      flex-wrap: wrap;
+    }
+
+    .page-btn {
+      min-width: 38px;
+      height: 38px;
+      padding: 0 12px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      background: white;
+      color: #444;
+      font-size: .88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .page-btn:hover:not(:disabled) {
+      border-color: #302b63;
+      color: #302b63;
+      background: #f0f4ff;
+    }
+
+    .page-btn.active {
+      background: linear-gradient(135deg, #1a1a2e, #302b63);
+      color: white;
+      border-color: transparent;
+    }
+
+    .page-btn:disabled {
+      opacity: .38;
+      cursor: default;
+    }
+
+    .page-info {
+      font-size: .82rem;
+      color: #999;
+      margin: 0 4px;
+    }
+
     /* ── Footer ── */
     footer {
       text-align: center;
@@ -520,6 +570,9 @@
     <div class="no-result" id="noResult">找不到符合條件的商品，請嘗試其他關鍵字或調整價格區間。</div>
   </div>
 
+  <!-- 分頁 -->
+  <div class="pagination" id="pagination"></div>
+
   <!-- Info strip -->
   <div class="info-strip">
     <div class="info-item">
@@ -556,38 +609,93 @@
 <footer>© 2026 夏日防曬外套專區 · 所有商品圖片僅供參考</footer>
 
 <script>
-  function filterProducts() {
+  const PAGE_SIZE = 9;
+  let currentPage = 1;
+  let filteredCards = [];
+
+  function getAllCards() {
+    return Array.from(document.querySelectorAll('#productGrid .product-card'));
+  }
+
+  function applyFilter() {
     const keyword = document.getElementById('searchName').value.trim().toLowerCase();
     const minPrice = parseFloat(document.getElementById('priceMin').value) || 0;
     const maxPrice = parseFloat(document.getElementById('priceMax').value) || Infinity;
 
-    const cards = document.querySelectorAll('#productGrid .product-card');
-    let visible = 0;
-
-    cards.forEach(card => {
+    filteredCards = getAllCards().filter(card => {
       const name = card.dataset.name.toLowerCase();
       const price = parseFloat(card.dataset.price);
-      const matchName = keyword === '' || name.includes(keyword);
-      const matchPrice = price >= minPrice && price <= maxPrice;
+      return (keyword === '' || name.includes(keyword)) && price >= minPrice && price <= maxPrice;
+    });
+  }
 
-      if (matchName && matchPrice) {
-        card.style.display = '';
-        visible++;
-      } else {
-        card.style.display = 'none';
-      }
+  function renderPage(page) {
+    currentPage = page;
+    const allCards = getAllCards();
+
+    const start = (page - 1) * PAGE_SIZE;
+    const end = start + PAGE_SIZE;
+    const pageCards = new Set(filteredCards.slice(start, end));
+
+    allCards.forEach(card => {
+      card.style.display = pageCards.has(card) ? '' : 'none';
     });
 
-    document.getElementById('noResult').style.display = visible === 0 ? 'block' : 'none';
+    document.getElementById('noResult').style.display = filteredCards.length === 0 ? 'block' : 'none';
+    renderPagination();
+  }
+
+  function renderPagination() {
+    const total = Math.ceil(filteredCards.length / PAGE_SIZE);
+    const container = document.getElementById('pagination');
+    container.innerHTML = '';
+
+    if (total <= 1) return;
+
+    const prev = document.createElement('button');
+    prev.className = 'page-btn';
+    prev.textContent = '‹ 上一頁';
+    prev.disabled = currentPage === 1;
+    prev.onclick = () => renderPage(currentPage - 1);
+    container.appendChild(prev);
+
+    for (let i = 1; i <= total; i++) {
+      const btn = document.createElement('button');
+      btn.className = 'page-btn' + (i === currentPage ? ' active' : '');
+      btn.textContent = i;
+      btn.onclick = () => renderPage(i);
+      container.appendChild(btn);
+    }
+
+    const next = document.createElement('button');
+    next.className = 'page-btn';
+    next.textContent = '下一頁 ›';
+    next.disabled = currentPage === total;
+    next.onclick = () => renderPage(currentPage + 1);
+    container.appendChild(next);
+
+    const info = document.createElement('span');
+    info.className = 'page-info';
+    info.textContent = `第 ${currentPage} / ${total} 頁・共 ${filteredCards.length} 件`;
+    container.appendChild(info);
+  }
+
+  function filterProducts() {
+    applyFilter();
+    renderPage(1);
   }
 
   function resetFilter() {
     document.getElementById('searchName').value = '';
     document.getElementById('priceMin').value = '';
     document.getElementById('priceMax').value = '';
-    document.querySelectorAll('#productGrid .product-card').forEach(c => c.style.display = '');
-    document.getElementById('noResult').style.display = 'none';
+    applyFilter();
+    renderPage(1);
   }
+
+  // 初始化
+  applyFilter();
+  renderPage(1);
 
   // 按 Enter 觸發搜尋
   ['searchName', 'priceMin', 'priceMax'].forEach(id => {
