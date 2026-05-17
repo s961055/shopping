@@ -14,16 +14,58 @@
     }
 
     header {
-      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
       color: white;
-      padding: 24px 20px;
+      padding: 32px 20px 28px;
       text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 60% 40%, rgba(255,255,255,.06) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .header-tag {
+      display: inline-block;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.25);
+      color: rgba(255,255,255,.85);
+      font-size: .75rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 3px 14px;
+      border-radius: 20px;
+      margin-bottom: 12px;
     }
 
     header h1 {
-      font-size: 1.6rem;
-      font-weight: 700;
+      font-size: 1.5rem;
+      font-weight: 800;
       letter-spacing: 1px;
+      line-height: 1.4;
+      text-shadow: 0 2px 8px rgba(0,0,0,.2);
+    }
+
+    .header-badges {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .header-badge {
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.2);
+      color: white;
+      font-size: .75rem;
+      padding: 3px 12px;
+      border-radius: 20px;
     }
 
     .price-tag {
@@ -216,8 +258,15 @@
 <body>
 
 <header>
-  <h1>🧥 TNF 北臉 冰絲涼感防曬外套 2026新款</h1>
+  <div class="header-tag">TNF · The North Face · 2026 New</div>
+  <h1>🧥 北臉 冰絲涼感防曬外套<br>2026 新款</h1>
   <div class="price-tag">💰 特價 $650</div>
+  <div class="header-badges">
+    <span class="header-badge">❄️ 冰絲涼感</span>
+    <span class="header-badge">🌞 SPF50+ 防曬</span>
+    <span class="header-badge">💪 S～4XL 大尺碼</span>
+    <span class="header-badge">🉐️ 專櫃品質</span>
+  </div>
 </header>
 
 <div class="container">
