@@ -280,6 +280,110 @@
       color: #888;
     }
 
+    /* ── Search Bar ── */
+    .search-bar {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.07);
+      padding: 22px 24px;
+      margin-bottom: 28px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: flex-end;
+    }
+
+    .search-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+      min-width: 160px;
+    }
+
+    .search-group label {
+      font-size: .75rem;
+      font-weight: 700;
+      color: #555;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .search-group input {
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: .9rem;
+      color: #333;
+      outline: none;
+      transition: border-color .2s;
+      background: #fafafa;
+    }
+
+    .search-group input:focus {
+      border-color: #302b63;
+      background: white;
+    }
+
+    .price-range {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .price-range input {
+      width: 100px;
+    }
+
+    .price-sep {
+      color: #aaa;
+      font-size: .9rem;
+    }
+
+    .btn-search {
+      background: linear-gradient(135deg, #1a1a2e, #302b63);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 11px 26px;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s, transform .2s;
+      white-space: nowrap;
+    }
+
+    .btn-search:hover {
+      opacity: .88;
+      transform: scale(1.03);
+    }
+
+    .btn-reset {
+      background: #f0f0f0;
+      color: #555;
+      border: none;
+      border-radius: 10px;
+      padding: 11px 18px;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s;
+      white-space: nowrap;
+    }
+
+    .btn-reset:hover {
+      background: #e0e0e0;
+    }
+
+    .no-result {
+      display: none;
+      text-align: center;
+      padding: 48px 20px;
+      color: #aaa;
+      font-size: 1rem;
+      grid-column: 1 / -1;
+    }
+
     /* ── Footer ── */
     footer {
       text-align: center;
@@ -309,10 +413,28 @@
 <main>
   <div class="section-title">全部商品</div>
 
-  <div class="product-grid">
+  <!-- 搜尋列 -->
+  <div class="search-bar">
+    <div class="search-group" style="flex:2; min-width:200px;">
+      <label>產品名稱</label>
+      <input type="text" id="searchName" placeholder="輸入關鍵字…">
+    </div>
+    <div class="search-group">
+      <label>價格區間</label>
+      <div class="price-range">
+        <input type="number" id="priceMin" placeholder="最低" min="0">
+        <span class="price-sep">～</span>
+        <input type="number" id="priceMax" placeholder="最高" min="0">
+      </div>
+    </div>
+    <button class="btn-search" onclick="filterProducts()">搜尋</button>
+    <button class="btn-reset" onclick="resetFilter()">重置</button>
+  </div>
+
+  <div class="product-grid" id="productGrid">
 
     <!-- 商品 1 -->
-    <div class="product-card">
+    <div class="product-card" data-name="冰絲涼感防曬外套 2026 新款 款式一 TNF The North Face SPF50+ 男女款 大尺碼" data-price="650">
       <div class="card-thumb">
         <img src="data1/S__15450175_0.jpg" alt="TNF 防曬外套 款式一">
         <div class="card-ribbon">特價</div>
@@ -340,7 +462,7 @@
     </div>
 
     <!-- 商品 2 -->
-    <div class="product-card">
+    <div class="product-card" data-name="K1608 立體刺繡字母顯瘦魚骨短袖T恤 韓國東大門 大尺碼 韓國熱銷" data-price="390">
       <div class="card-thumb">
         <img src="data2/S__15450149_0.jpg" alt="K1608 東大門立體刺繡魚骨短袖T恤">
         <div class="card-ribbon">特價</div>
@@ -368,7 +490,7 @@
     </div>
 
     <!-- 商品 3 -->
-    <div class="product-card">
+    <div class="product-card" data-name="K1613 POLO刺繡小馬V領收腰顯瘦上衣 韓國東大門 精緻刺繡 大尺碼 韓國熱銷" data-price="390">
       <div class="card-thumb">
         <img src="data3/S__15450131_0.jpg" alt="K1613 POLO刺繡小馬V領收腰顯瘦上衣">
         <div class="card-ribbon">特價</div>
@@ -395,6 +517,7 @@
       </div>
     </div>
 
+    <div class="no-result" id="noResult">找不到符合條件的商品，請嘗試其他關鍵字或調整價格區間。</div>
   </div>
 
   <!-- Info strip -->
@@ -432,5 +555,46 @@
 
 <footer>© 2026 夏日防曬外套專區 · 所有商品圖片僅供參考</footer>
 
+<script>
+  function filterProducts() {
+    const keyword = document.getElementById('searchName').value.trim().toLowerCase();
+    const minPrice = parseFloat(document.getElementById('priceMin').value) || 0;
+    const maxPrice = parseFloat(document.getElementById('priceMax').value) || Infinity;
+
+    const cards = document.querySelectorAll('#productGrid .product-card');
+    let visible = 0;
+
+    cards.forEach(card => {
+      const name = card.dataset.name.toLowerCase();
+      const price = parseFloat(card.dataset.price);
+      const matchName = keyword === '' || name.includes(keyword);
+      const matchPrice = price >= minPrice && price <= maxPrice;
+
+      if (matchName && matchPrice) {
+        card.style.display = '';
+        visible++;
+      } else {
+        card.style.display = 'none';
+      }
+    });
+
+    document.getElementById('noResult').style.display = visible === 0 ? 'block' : 'none';
+  }
+
+  function resetFilter() {
+    document.getElementById('searchName').value = '';
+    document.getElementById('priceMin').value = '';
+    document.getElementById('priceMax').value = '';
+    document.querySelectorAll('#productGrid .product-card').forEach(c => c.style.display = '');
+    document.getElementById('noResult').style.display = 'none';
+  }
+
+  // 按 Enter 觸發搜尋
+  ['searchName', 'priceMin', 'priceMax'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') filterProducts();
+    });
+  });
+</script>
 </body>
 </html>
