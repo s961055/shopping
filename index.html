@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>商品總覽 | 夏日防曬外套專區</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', 'Microsoft JhengHei', Arial, sans-serif;
+      background: #f2f4f8;
+      color: #333;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      color: white;
+      padding: 40px 20px 36px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 60% 40%, rgba(255,255,255,.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .brand-tag {
+      display: inline-block;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.25);
+      color: rgba(255,255,255,.85);
+      font-size: .78rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      padding: 4px 16px;
+      border-radius: 20px;
+      margin-bottom: 14px;
+    }
+
+    header h1 {
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      font-weight: 800;
+      letter-spacing: 1px;
+      line-height: 1.3;
+    }
+
+    header p {
+      margin-top: 10px;
+      color: rgba(255,255,255,.65);
+      font-size: .92rem;
+      letter-spacing: .5px;
+    }
+
+    .badge-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .badge {
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.2);
+      color: white;
+      font-size: .78rem;
+      padding: 4px 14px;
+      border-radius: 20px;
+    }
+
+    /* ── Main ── */
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 20px 60px;
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: #ddd;
+    }
+
+    /* ── Product Grid ── */
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 28px;
+    }
+
+    .product-card {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,.08);
+      transition: transform .28s ease, box-shadow .28s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .product-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 12px 32px rgba(0,0,0,.14);
+    }
+
+    .card-thumb {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      overflow: hidden;
+      background: #eee;
+    }
+
+    .card-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform .4s ease;
+      display: block;
+    }
+
+    .product-card:hover .card-thumb img {
+      transform: scale(1.07);
+    }
+
+    .card-ribbon {
+      position: absolute;
+      top: 14px;
+      left: 0;
+      background: #e63946;
+      color: white;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding: 4px 12px 4px 10px;
+      border-radius: 0 20px 20px 0;
+      box-shadow: 2px 2px 6px rgba(0,0,0,.2);
+    }
+
+    .card-body {
+      padding: 20px 20px 16px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-brand {
+      font-size: .72rem;
+      color: #888;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #1a1a2e;
+      margin-bottom: 10px;
+    }
+
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .tag {
+      background: #f0f4ff;
+      color: #3a5ccc;
+      font-size: .72rem;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+
+    .card-desc {
+      font-size: .85rem;
+      color: #666;
+      line-height: 1.6;
+      flex: 1;
+      margin-bottom: 16px;
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 14px;
+      border-top: 1px solid #f0f0f0;
+    }
+
+    .price {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #e63946;
+    }
+
+    .price span {
+      font-size: .8rem;
+      font-weight: 500;
+      color: #aaa;
+      text-decoration: line-through;
+      margin-left: 6px;
+    }
+
+    .btn-detail {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, #1a1a2e, #302b63);
+      color: white;
+      text-decoration: none;
+      font-size: .85rem;
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 10px;
+      transition: opacity .2s, transform .2s;
+    }
+
+    .btn-detail:hover {
+      opacity: .88;
+      transform: scale(1.03);
+    }
+
+    /* ── Info Strip ── */
+    .info-strip {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 32px;
+      margin-top: 50px;
+      padding: 28px 20px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    }
+
+    .info-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #444;
+    }
+
+    .info-icon {
+      font-size: 1.6rem;
+    }
+
+    .info-text strong {
+      display: block;
+      font-size: .9rem;
+      color: #1a1a2e;
+    }
+
+    .info-text span {
+      font-size: .78rem;
+      color: #888;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 24px 20px;
+      color: #aaa;
+      font-size: .78rem;
+      border-top: 1px solid #e8e8e8;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand-tag">Summer Collection 2026</div>
+  <h1>🧥 夏日防曬外套專區</h1>
+  <p>輕薄透氣・SPF50+・男女款・S～4XL 大尺碼</p>
+  <div class="badge-row">
+    <span class="badge">❄️ 冰絲涼感</span>
+    <span class="badge">🌞 360° 防曬抗UV</span>
+    <span class="badge">🉐️ 專櫃品質</span>
+    <span class="badge">💖 情侶款</span>
+  </div>
+</header>
+
+<main>
+  <div class="section-title">全部商品</div>
+
+  <div class="product-grid">
+
+    <!-- 商品 1 -->
+    <div class="product-card">
+      <div class="card-thumb">
+        <img src="data1/S__15450175_0.jpg" alt="TNF 防曬外套 款式一">
+        <div class="card-ribbon">特價</div>
+      </div>
+      <div class="card-body">
+        <div class="card-brand">TNF · The North Face</div>
+        <div class="card-title">冰絲涼感防曬外套 2026 新款（款式一）</div>
+        <div class="card-tags">
+          <span class="tag">SPF50+</span>
+          <span class="tag">冰絲材質</span>
+          <span class="tag">男女款</span>
+          <span class="tag">大尺碼</span>
+        </div>
+        <div class="card-desc">
+          黑色・藍色・米杏・紫色・灰色，尺寸 S～4XL。
+          輕薄透氣，UVA 阻擋率 ≥ 99%，雙大口袋設計，情侶同款可搭配。
+        </div>
+        <div class="card-footer">
+          <div>
+            <div class="price">$650<span>$1,280</span></div>
+          </div>
+          <a href="data1/index.html" class="btn-detail">查看詳情 ›</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 商品 2 -->
+    <div class="product-card">
+      <div class="card-thumb">
+        <img src="data2/S__15450149_0.jpg" alt="TNF 防曬外套 款式二">
+        <div class="card-ribbon">特價</div>
+      </div>
+      <div class="card-body">
+        <div class="card-brand">TNF · The North Face</div>
+        <div class="card-title">冰絲涼感防曬外套 2026 新款（款式二）</div>
+        <div class="card-tags">
+          <span class="tag">SPF50+</span>
+          <span class="tag">冰絲材質</span>
+          <span class="tag">男女款</span>
+          <span class="tag">大尺碼</span>
+        </div>
+        <div class="card-desc">
+          黑色・藍色・米杏・紫色・灰色，尺寸 S～4XL。
+          輕薄透氣，UVA 阻擋率 ≥ 99%，雙大口袋設計，情侶同款可搭配。
+        </div>
+        <div class="card-footer">
+          <div>
+            <div class="price">$650<span>$1,280</span></div>
+          </div>
+          <a href="data2/index.html" class="btn-detail">查看詳情 ›</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Info strip -->
+  <div class="info-strip">
+    <div class="info-item">
+      <div class="info-icon">🚚</div>
+      <div class="info-text">
+        <strong>全台配送</strong>
+        <span>宅配・超商取貨</span>
+      </div>
+    </div>
+    <div class="info-item">
+      <div class="info-icon">🔄</div>
+      <div class="info-text">
+        <strong>7 天鑑賞期</strong>
+        <span>不滿意可退換</span>
+      </div>
+    </div>
+    <div class="info-item">
+      <div class="info-icon">🛡️</div>
+      <div class="info-text">
+        <strong>品質保證</strong>
+        <span>專櫃同等品質</span>
+      </div>
+    </div>
+    <div class="info-item">
+      <div class="info-icon">💳</div>
+      <div class="info-text">
+        <strong>多元付款</strong>
+        <span>信用卡・LINE Pay・匯款</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>© 2026 夏日防曬外套專區 · 所有商品圖片僅供參考</footer>
+
+</body>
+</html>
