@@ -554,6 +554,137 @@
       display: block;
     }
 
+    /* ── Contact Section ── */
+    .contact-section {
+      margin-top: 20px;
+      padding: 20px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    }
+
+    .contact-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+      padding: 4px 0;
+    }
+
+    .contact-title-arrow {
+      font-size: .7rem;
+      color: #aaa;
+      transition: transform .3s;
+      display: inline-block;
+    }
+
+    .contact-section.open .contact-title-arrow {
+      transform: rotate(180deg);
+    }
+
+    .contact-section.open .contact-title {
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      font-size: .78rem;
+      font-weight: 700;
+      color: #555;
+      letter-spacing: 1px;
+    }
+
+    .form-group input[type="text"],
+    .form-group input[type="email"],
+    .form-group textarea {
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: .9rem;
+      color: #333;
+      outline: none;
+      transition: border-color .2s;
+      background: #fafafa;
+      font-family: inherit;
+    }
+
+    .form-group input[type="text"]:focus,
+    .form-group input[type="email"]:focus,
+    .form-group textarea:focus {
+      border-color: #302b63;
+      background: white;
+    }
+
+    .form-group textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .captcha-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    #captchaCanvas {
+      border: 1.5px solid #e0e0e0;
+      border-radius: 8px;
+      display: block;
+    }
+
+    .btn-refresh {
+      background: #f0f0f0;
+      color: #555;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: .82rem;
+      cursor: pointer;
+      transition: background .2s;
+      white-space: nowrap;
+    }
+
+    .btn-refresh:hover { background: #e0e0e0; }
+
+    .btn-submit {
+      background: linear-gradient(135deg, #1a1a2e, #302b63);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 28px;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s, transform .2s;
+      width: 100%;
+    }
+
+    .btn-submit:hover { opacity: .88; transform: scale(1.01); }
+
+    .contact-success {
+      display: none;
+      text-align: center;
+      padding: 16px;
+      color: #1a6b3c;
+      background: #d8f3dc;
+      border-radius: 10px;
+      font-size: .9rem;
+      margin-top: 12px;
+    }
+
     /* ── Footer ── */
     footer {
       text-align: center;
@@ -617,6 +748,36 @@
     <div id="faqList" style="display: none;"></div>
   </div>
 
+  <!-- 聯絡我們區塊 -->
+  <div class="contact-section" id="contactSection" style="display: none; margin-top: 20px;">
+    <div class="contact-title" onclick="toggleContact()">
+      <span>✉️ 聯絡我們</span>
+      <span class="contact-title-arrow">▼</span>
+    </div>
+    <div id="contactBody" style="display: none;">
+      <form id="contactForm" onsubmit="submitContact(event)">
+        <div class="form-group">
+          <label>您的 Email</label>
+          <input type="email" id="userEmail" required placeholder="請輸入您的 Email">
+        </div>
+        <div class="form-group">
+          <label>訊息內容</label>
+          <textarea id="userMessage" required placeholder="請輸入您的訊息…"></textarea>
+        </div>
+        <div class="form-group">
+          <label>圖形驗證碼</label>
+          <div class="captcha-row">
+            <canvas id="captchaCanvas" width="150" height="50"></canvas>
+            <button type="button" class="btn-refresh" onclick="refreshCaptcha()">↺ 換一張</button>
+          </div>
+          <input type="text" id="captchaInput" required placeholder="請輸入上方驗證碼" autocomplete="off" maxlength="6">
+        </div>
+        <button type="submit" class="btn-submit">送出訊息 ✉️</button>
+      </form>
+      <div class="contact-success" id="contactSuccess">✅ 已開啟郵件視窗，請確認內容後送出。</div>
+    </div>
+  </div>
+
   <!-- Info strip -->
   <div class="info-strip">
     <div class="info-item">
@@ -660,6 +821,8 @@
   let currentPage = 1;
   let allProducts = [];
   let filteredProducts = [];
+  let contactEmail = '';
+  let captchaCode = '';
 
   async function loadProducts() {
     try {
@@ -675,6 +838,12 @@
       // 載入 FAQ
       if (data.config && data.config.faq && data.config.faq.length > 0) {
         renderFAQ(data.config.faq);
+      }
+
+      // 載入聯絡我們
+      if (data.config && data.config.email) {
+        contactEmail = data.config.email;
+        document.getElementById('contactSection').style.display = 'block';
       }
     } catch (error) {
       console.error("Error loading products:", error);
@@ -709,6 +878,91 @@
     const faqList = document.getElementById('faqList');
     const isOpen = faqSection.classList.toggle('open');
     faqList.style.display = isOpen ? 'block' : 'none';
+  }
+
+  function toggleContact() {
+    const section = document.getElementById('contactSection');
+    const body = document.getElementById('contactBody');
+    const isOpen = section.classList.toggle('open');
+    body.style.display = isOpen ? 'block' : 'none';
+    if (isOpen) {
+      generateCaptcha();
+      document.getElementById('contactSuccess').style.display = 'none';
+    }
+  }
+
+  function generateCaptcha() {
+    const canvas = document.getElementById('captchaCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    captchaCode = Array.from({length: 5}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 背景漸層
+    const grad = ctx.createLinearGradient(0, 0, canvas.width, 0);
+    grad.addColorStop(0, '#eef2ff');
+    grad.addColorStop(1, '#f5f0ff');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // 雜訊點
+    for (let i = 0; i < 60; i++) {
+      ctx.fillStyle = `rgba(${Math.random()*180|0},${Math.random()*180|0},${Math.random()*180|0},0.35)`;
+      ctx.beginPath();
+      ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 1.5 + 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 干擾曲線
+    for (let i = 0; i < 3; i++) {
+      ctx.strokeStyle = `rgba(${Math.random()*160|0},${Math.random()*160|0},${Math.random()*200|0},0.4)`;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
+      ctx.bezierCurveTo(
+        Math.random() * canvas.width, Math.random() * canvas.height,
+        Math.random() * canvas.width, Math.random() * canvas.height,
+        Math.random() * canvas.width, Math.random() * canvas.height
+      );
+      ctx.stroke();
+    }
+
+    // 繪製驗證碼字元
+    const colors = ['#1a1a2e', '#302b63', '#c0392b', '#1a6b3c', '#7b2d8b'];
+    captchaCode.split('').forEach((char, i) => {
+      ctx.save();
+      ctx.font = `bold ${(22 + Math.random() * 8) | 0}px Arial, sans-serif`;
+      ctx.fillStyle = colors[i % colors.length];
+      ctx.translate(14 + i * 26, 34 + (Math.random() - 0.5) * 6);
+      ctx.rotate((Math.random() - 0.5) * 0.5);
+      ctx.fillText(char, 0, 0);
+      ctx.restore();
+    });
+  }
+
+  function refreshCaptcha() {
+    document.getElementById('captchaInput').value = '';
+    generateCaptcha();
+  }
+
+  function submitContact(e) {
+    e.preventDefault();
+    const inputVal = document.getElementById('captchaInput').value.trim();
+    if (inputVal.toLowerCase() !== captchaCode.toLowerCase()) {
+      alert('驗證碼錯誤，請重新輸入。');
+      refreshCaptcha();
+      return;
+    }
+    const userEmail = document.getElementById('userEmail').value.trim();
+    const message = document.getElementById('userMessage').value.trim();
+    const subject = encodeURIComponent('網站訊息詢問');
+    const body = encodeURIComponent(`來自：${userEmail}\n\n${message}`);
+    window.location.href = `mailto:${contactEmail}?subject=${subject}&body=${body}`;
+    document.getElementById('contactSuccess').style.display = 'block';
+    document.getElementById('contactForm').reset();
+    refreshCaptcha();
   }
 
   function renderProducts(page) {
