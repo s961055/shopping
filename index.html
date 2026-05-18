@@ -816,6 +816,7 @@
 <!-- 返回頂部按鈕 -->
 <button id="backToTop" class="back-to-top" onclick="scrollToTop()" title="返回頂部">↑</button>
 
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
 <script>
   const PAGE_SIZE = 9;
   let currentPage = 1;
@@ -826,68 +827,56 @@
 
   async function loadProducts() {
     try {
-      const response = await fetch('data.json');
-      const data = await response.json();
-      // Convert object to array and keep the key as 'id'
-      allProducts = Object.entries(data.information).map(([id, product]) => ({
-        id,
-        ...product
-      }));
+      const data = await $.getJSON('data.json');
+      allProducts = Object.entries(data.information).map(([id, product]) => ({ id, ...product }));
       filterProducts();
 
-      // 載入 FAQ
       if (data.config && data.config.faq && data.config.faq.length > 0) {
         renderFAQ(data.config.faq);
       }
 
-      // 載入聯絡我們
       if (data.config && data.config.email) {
         contactEmail = data.config.email;
-        document.getElementById('contactSection').style.display = 'block';
+        $('#contactSection').show();
       }
     } catch (error) {
-      console.error("Error loading products:", error);
-      document.getElementById('productGrid').innerHTML = '<div style="text-align:center; padding: 40px; color: red;">載入商品失敗，請稍後再試。</div>';
+      console.error('Error loading products:', error);
+      $('#productGrid').html('<div style="text-align:center; padding: 40px; color: red;">載入商品失敗，請稍後再試。</div>');
     }
   }
 
   function renderFAQ(faqData) {
-    const faqSection = document.getElementById('faqSection');
-    const faqList = document.getElementById('faqList');
-    faqList.innerHTML = '';
+    const $faqList = $('#faqList').empty();
 
     faqData.forEach(item => {
-      const faqItem = document.createElement('div');
-      faqItem.className = 'faq-item';
-      faqItem.innerHTML = `
-        <div class="faq-question">${item.title}</div>
-        <div class="faq-answer">${item.answer}</div>
-      `;
-      faqItem.querySelector('.faq-question').onclick = () => {
-        faqItem.classList.toggle('active');
-      };
-      faqList.appendChild(faqItem);
+      const $faqItem = $('<div>').addClass('faq-item');
+      const $question = $('<div>').addClass('faq-question').html(item.title);
+      const $answer = $('<div>').addClass('faq-answer').html(item.answer);
+
+      $question.on('click', function () {
+        $faqItem.toggleClass('active');
+      });
+
+      $faqItem.append($question, $answer);
+      $faqList.append($faqItem);
     });
 
-    faqSection.style.display = 'block';
-    // faqList 預設隱藏，等使用者點擊後展開
+    $('#faqSection').show();
   }
 
   function toggleFAQ() {
-    const faqSection = document.getElementById('faqSection');
-    const faqList = document.getElementById('faqList');
-    const isOpen = faqSection.classList.toggle('open');
-    faqList.style.display = isOpen ? 'block' : 'none';
+    const $faqSection = $('#faqSection');
+    const isOpen = $faqSection.toggleClass('open').hasClass('open');
+    $('#faqList').toggle(isOpen);
   }
 
   function toggleContact() {
-    const section = document.getElementById('contactSection');
-    const body = document.getElementById('contactBody');
-    const isOpen = section.classList.toggle('open');
-    body.style.display = isOpen ? 'block' : 'none';
+    const $section = $('#contactSection');
+    const isOpen = $section.toggleClass('open').hasClass('open');
+    $('#contactBody').toggle(isOpen);
     if (isOpen) {
       generateCaptcha();
-      document.getElementById('contactSuccess').style.display = 'none';
+      $('#contactSuccess').hide();
     }
   }
 
@@ -896,28 +885,25 @@
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-    captchaCode = Array.from({length: 5}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    captchaCode = Array.from({ length: 5 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 背景漸層
     const grad = ctx.createLinearGradient(0, 0, canvas.width, 0);
     grad.addColorStop(0, '#eef2ff');
     grad.addColorStop(1, '#f5f0ff');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 雜訊點
     for (let i = 0; i < 60; i++) {
-      ctx.fillStyle = `rgba(${Math.random()*180|0},${Math.random()*180|0},${Math.random()*180|0},0.35)`;
+      ctx.fillStyle = `rgba(${Math.random() * 180 | 0},${Math.random() * 180 | 0},${Math.random() * 180 | 0},0.35)`;
       ctx.beginPath();
       ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 1.5 + 0.5, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    // 干擾曲線
     for (let i = 0; i < 3; i++) {
-      ctx.strokeStyle = `rgba(${Math.random()*160|0},${Math.random()*160|0},${Math.random()*200|0},0.4)`;
+      ctx.strokeStyle = `rgba(${Math.random() * 160 | 0},${Math.random() * 160 | 0},${Math.random() * 200 | 0},0.4)`;
       ctx.lineWidth = 1.2;
       ctx.beginPath();
       ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
@@ -929,7 +915,6 @@
       ctx.stroke();
     }
 
-    // 繪製驗證碼字元
     const colors = ['#1a1a2e', '#302b63', '#c0392b', '#1a6b3c', '#7b2d8b'];
     captchaCode.split('').forEach((char, i) => {
       ctx.save();
@@ -943,123 +928,106 @@
   }
 
   function refreshCaptcha() {
-    document.getElementById('captchaInput').value = '';
+    $('#captchaInput').val('');
     generateCaptcha();
   }
 
   function submitContact(e) {
     e.preventDefault();
-    const inputVal = document.getElementById('captchaInput').value.trim();
+    const inputVal = $('#captchaInput').val().trim();
     if (inputVal.toLowerCase() !== captchaCode.toLowerCase()) {
       alert('驗證碼錯誤，請重新輸入。');
       refreshCaptcha();
       return;
     }
-    const userEmail = document.getElementById('userEmail').value.trim();
-    const message = document.getElementById('userMessage').value.trim();
+    const userEmail = $('#userEmail').val().trim();
+    const message = $('#userMessage').val().trim();
     const subject = encodeURIComponent('網站訊息詢問');
     const body = encodeURIComponent(`來自：${userEmail}\n\n${message}`);
     window.location.href = `mailto:${contactEmail}?subject=${subject}&body=${body}`;
-    document.getElementById('contactSuccess').style.display = 'block';
-    document.getElementById('contactForm').reset();
+    $('#contactSuccess').show();
+    $('#contactForm')[0].reset();
     refreshCaptcha();
   }
 
   function renderProducts(page) {
     currentPage = page;
-    const grid = document.getElementById('productGrid');
-    
-    // Clear existing cards (except no-result message)
-    const cards = grid.querySelectorAll('.product-card');
-    cards.forEach(card => card.remove());
+    $('#productGrid .product-card').remove();
 
     const start = (page - 1) * PAGE_SIZE;
-    const end = start + PAGE_SIZE;
-    const pageProducts = filteredProducts.slice(start, end);
+    const pageProducts = filteredProducts.slice(start, start + PAGE_SIZE);
 
     pageProducts.forEach(product => {
-      const card = document.createElement('div');
-      card.className = 'product-card';
-      
       const firstImage = `${product.id}/${product.images[0]}`;
-      const originalPriceHtml = product.originalPrice ? `<span>$${product.originalPrice.toLocaleString()}</span>` : '';
-      
-      let tagsHtml = '';
-      product.tags.forEach(tag => {
-        tagsHtml += `<span class="tag">${tag}</span>`;
-      });
+      const originalPriceHtml = product.originalPrice
+        ? `<span>$${product.originalPrice.toLocaleString()}</span>`
+        : '';
+      const tagsHtml = product.tags.map(tag => `<span class="tag">${tag}</span>`).join('');
 
-      card.innerHTML = `
-        <a href="template.html?id=${product.id}" class="card-thumb">
-          <img src="${firstImage}" alt="${product.name}">
-          ${product.ribbon ? `<div class="card-ribbon">${product.ribbon}</div>` : ''}
-        </a>
-        <div class="card-body">
-          <div class="card-brand">${product.brand}</div>
-          <div class="card-title">${product.shortName || product.name}</div>
-          <div class="card-tags">${tagsHtml}</div>
-          <div class="card-desc">${product.desc.split('\n')[0]}</div>
-          <div class="card-listing-time">上架時間：${product.listingTime}</div>
-          <div class="card-footer">
-            <div>
-              <div class="price">$${product.price.toLocaleString()}${originalPriceHtml}</div>
+      const cardHtml = `
+        <div class="product-card">
+          <a href="template.html?id=${product.id}" class="card-thumb">
+            <img src="${firstImage}" alt="${product.name}">
+            ${product.ribbon ? `<div class="card-ribbon">${product.ribbon}</div>` : ''}
+          </a>
+          <div class="card-body">
+            <div class="card-brand">${product.brand}</div>
+            <div class="card-title">${product.shortName || product.name}</div>
+            <div class="card-tags">${tagsHtml}</div>
+            <div class="card-desc">${product.desc.split('\n')[0]}</div>
+            <div class="card-listing-time">上架時間：${product.listingTime}</div>
+            <div class="card-footer">
+              <div>
+                <div class="price">$${product.price.toLocaleString()}${originalPriceHtml}</div>
+              </div>
+              <a href="template.html?id=${product.id}" class="btn-detail">查看詳情 ›</a>
             </div>
-            <a href="template.html?id=${product.id}" class="btn-detail">查看詳情 ›</a>
           </div>
         </div>
       `;
-      grid.insertBefore(card, document.getElementById('noResult'));
+      $('#noResult').before(cardHtml);
     });
 
-    document.getElementById('noResult').style.display = filteredProducts.length === 0 ? 'block' : 'none';
+    $('#noResult').toggle(filteredProducts.length === 0);
     renderPagination();
   }
 
   function renderPagination() {
     const total = Math.ceil(filteredProducts.length / PAGE_SIZE);
-    const container = document.getElementById('pagination');
-    container.innerHTML = '';
+    const $container = $('#pagination').empty();
 
-    if (total <= 1 && filteredProducts.length > 0) return;
-    if (filteredProducts.length === 0) return;
+    if (filteredProducts.length === 0 || total <= 1) return;
 
-    const prev = document.createElement('button');
-    prev.className = 'page-btn';
-    prev.textContent = '‹ 上一頁';
-    prev.disabled = currentPage === 1;
-    prev.onclick = () => renderProducts(currentPage - 1);
-    container.appendChild(prev);
+    $('<button>').addClass('page-btn').text('‹ 上一頁')
+      .prop('disabled', currentPage === 1)
+      .on('click', () => renderProducts(currentPage - 1))
+      .appendTo($container);
 
     for (let i = 1; i <= total; i++) {
-      const btn = document.createElement('button');
-      btn.className = 'page-btn' + (i === currentPage ? ' active' : '');
-      btn.textContent = i;
-      btn.onclick = () => renderProducts(i);
-      container.appendChild(btn);
+      $('<button>').addClass('page-btn' + (i === currentPage ? ' active' : '')).text(i)
+        .on('click', (function (p) { return () => renderProducts(p); })(i))
+        .appendTo($container);
     }
 
-    const next = document.createElement('button');
-    next.className = 'page-btn';
-    next.textContent = '下一頁 ›';
-    next.disabled = currentPage === total;
-    next.onclick = () => renderProducts(currentPage + 1);
-    container.appendChild(next);
+    $('<button>').addClass('page-btn').text('下一頁 ›')
+      .prop('disabled', currentPage === total)
+      .on('click', () => renderProducts(currentPage + 1))
+      .appendTo($container);
 
-    const info = document.createElement('span');
-    info.className = 'page-info';
-    info.textContent = `第 ${currentPage} / ${total} 頁・共 ${filteredProducts.length} 件`;
-    container.appendChild(info);
+    $('<span>').addClass('page-info')
+      .text(`第 ${currentPage} / ${total} 頁・共 ${filteredProducts.length} 件`)
+      .appendTo($container);
   }
 
   function filterProducts() {
-    const keyword = document.getElementById('searchName').value.trim().toLowerCase();
-    const minPrice = parseFloat(document.getElementById('priceMin').value) || 0;
-    const maxPrice = parseFloat(document.getElementById('priceMax').value) || Infinity;
+    const keyword = $('#searchName').val().trim().toLowerCase();
+    const minPrice = parseFloat($('#priceMin').val()) || 0;
+    const maxPrice = parseFloat($('#priceMax').val()) || Infinity;
 
     filteredProducts = allProducts.filter(product => {
-      const nameMatch = product.name.toLowerCase().includes(keyword) || 
-                        product.brand.toLowerCase().includes(keyword) ||
-                        product.desc.toLowerCase().includes(keyword);
+      const nameMatch = product.name.toLowerCase().includes(keyword) ||
+        product.brand.toLowerCase().includes(keyword) ||
+        product.desc.toLowerCase().includes(keyword);
       const priceMatch = product.price >= minPrice && product.price <= maxPrice;
       return nameMatch && priceMatch;
     });
@@ -1068,39 +1036,29 @@
   }
 
   function resetFilter() {
-    document.getElementById('searchName').value = '';
-    document.getElementById('priceMin').value = '';
-    document.getElementById('priceMax').value = '';
+    $('#searchName, #priceMin, #priceMax').val('');
     filterProducts();
   }
 
-  // 初始化
-  loadProducts();
+  function scrollToTop() {
+    $('html, body').animate({ scrollTop: 0 }, 400);
+  }
 
-  // 按 Enter 觸發搜尋
-  ['searchName', 'priceMin', 'priceMax'].forEach(id => {
-    document.getElementById(id).addEventListener('keydown', e => {
+  $(function () {
+    loadProducts();
+
+    $('#searchName, #priceMin, #priceMax').on('keydown', function (e) {
       if (e.key === 'Enter') filterProducts();
     });
-  });
 
-  // 返回頂部功能
-  const backToTopBtn = document.getElementById('backToTop');
-
-  window.onscroll = function() {
-    if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
-      backToTopBtn.style.display = "flex";
-    } else {
-      backToTopBtn.style.display = "none";
-    }
-  };
-
-  function scrollToTop() {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
+    $(window).on('scroll', function () {
+      if ($(this).scrollTop() > 300) {
+        $('#backToTop').css('display', 'flex');
+      } else {
+        $('#backToTop').hide();
+      }
     });
-  }
+  });
 </script>
 
 </body>
