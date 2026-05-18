@@ -105,6 +105,10 @@
       border-radius: 8px;
       object-fit: contain;
       box-shadow: 0 8px 32px rgba(0,0,0,.5);
+      transition: transform .2s ease;
+      cursor: grab;
+      user-select: none;
+      -webkit-user-drag: none;
     }
 
     .lightbox-nav {
@@ -112,6 +116,9 @@
       gap: 20px;
       margin-top: 16px;
     }
+
+    .zoom-btn { padding: 8px 14px !important; min-width: 40px; }
+    #zoom-label { min-width: 58px; font-size: .9rem; }
 
     .lightbox-nav button, .lightbox-close {
       background: rgba(255,255,255,.15);
@@ -289,6 +296,9 @@
   <img id="lightbox-img" src="" alt="">
   <div class="lightbox-nav">
     <button onclick="changeImage(-1)">&#9664; 上一張</button>
+    <button class="zoom-btn" onclick="zoomOut()" title="縮小">－</button>
+    <button class="zoom-btn" id="zoom-label" onclick="resetZoom()" title="重置縮放">100%</button>
+    <button class="zoom-btn" onclick="zoomIn()" title="放大">＋</button>
     <button onclick="changeImage(1)">下一張 &#9654;</button>
   </div>
   <div class="lightbox-counter" id="lightbox-counter"></div>
@@ -299,6 +309,9 @@
   let productId = "";
   let images = [];
   let currentIndex = 0;
+  let zoomLevel = 1;
+  let panX = 0, panY = 0;
+  const MIN_ZOOM = 0.5, MAX_ZOOM = 4, ZOOM_STEP = 0.25;
 
   async function init() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -376,10 +389,125 @@
   }
 
   function updateLightbox() {
-    document.getElementById("lightbox-img").src = images[currentIndex];
+    zoomLevel = 1; panX = 0; panY = 0;
+    const img = document.getElementById('lightbox-img');
+    img.style.transform = '';
+    const label = document.getElementById('zoom-label');
+    if (label) label.textContent = '100%';
+    img.src = images[currentIndex];
     document.getElementById("lightbox-counter").textContent =
       `${currentIndex + 1} / ${images.length}`;
   }
+
+  function zoomIn() {
+    zoomLevel = Math.min(MAX_ZOOM, +(zoomLevel + ZOOM_STEP).toFixed(2));
+    applyZoom();
+  }
+
+  function zoomOut() {
+    zoomLevel = Math.max(MIN_ZOOM, +(zoomLevel - ZOOM_STEP).toFixed(2));
+    if (zoomLevel <= 1) { panX = 0; panY = 0; }
+    applyZoom();
+  }
+
+  function resetZoom() {
+    zoomLevel = 1; panX = 0; panY = 0;
+    applyZoom();
+  }
+
+  function applyZoom() {
+    const img = document.getElementById('lightbox-img');
+    img.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
+    img.style.cursor = zoomLevel > 1 ? 'grab' : 'default';
+    const label = document.getElementById('zoom-label');
+    if (label) label.textContent = `${Math.round(zoomLevel * 100)}%`;
+  }
+
+  // Wheel zoom
+  document.getElementById('lightbox').addEventListener('wheel', function(e) {
+    if (!this.classList.contains('active')) return;
+    e.preventDefault();
+    e.deltaY < 0 ? zoomIn() : zoomOut();
+  }, { passive: false });
+
+  // Drag to pan
+  (function() {
+    let dragging = false, startX, startY;
+    const img = document.getElementById('lightbox-img');
+
+    img.addEventListener('mousedown', function(e) {
+      if (zoomLevel <= 1) return;
+      dragging = true;
+      startX = e.clientX - panX;
+      startY = e.clientY - panY;
+      img.style.transition = 'none';
+      img.style.cursor = 'grabbing';
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+      if (!dragging) return;
+      panX = e.clientX - startX;
+      panY = e.clientY - startY;
+      img.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
+    });
+
+    document.addEventListener('mouseup', function() {
+      if (!dragging) return;
+      dragging = false;
+      img.style.transition = 'transform .2s ease';
+      img.style.cursor = zoomLevel > 1 ? 'grab' : 'default';
+    });
+  })();
+
+  // Touch: pinch-to-zoom + single-finger pan
+  (function() {
+    const lb = document.getElementById('lightbox');
+    let initialDist = 0, initialZoom = 1, isPinching = false;
+    let tStartX = 0, tStartY = 0;
+
+    function touchDist(touches) {
+      return Math.hypot(
+        touches[0].clientX - touches[1].clientX,
+        touches[0].clientY - touches[1].clientY
+      );
+    }
+
+    lb.addEventListener('touchstart', function(e) {
+      if (!lb.classList.contains('active')) return;
+      if (e.touches.length === 2) {
+        isPinching = true;
+        initialDist = touchDist(e.touches);
+        initialZoom = zoomLevel;
+        e.preventDefault();
+      } else if (e.touches.length === 1 && zoomLevel > 1) {
+        tStartX = e.touches[0].clientX - panX;
+        tStartY = e.touches[0].clientY - panY;
+      }
+    }, { passive: false });
+
+    lb.addEventListener('touchmove', function(e) {
+      if (!lb.classList.contains('active')) return;
+      if (e.touches.length === 2 && isPinching) {
+        const newDist = touchDist(e.touches);
+        zoomLevel = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM,
+          +(initialZoom * newDist / initialDist).toFixed(2)));
+        if (zoomLevel <= 1) { panX = 0; panY = 0; }
+        applyZoom();
+        e.preventDefault();
+      } else if (e.touches.length === 1 && !isPinching && zoomLevel > 1) {
+        panX = e.touches[0].clientX - tStartX;
+        panY = e.touches[0].clientY - tStartY;
+        const img = document.getElementById('lightbox-img');
+        img.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    lb.addEventListener('touchend', function(e) {
+      if (e.touches.length < 2) isPinching = false;
+    });
+  })();
 
   // Keyboard support
   document.addEventListener("keydown", e => {
@@ -387,6 +515,9 @@
     if (e.key === "ArrowLeft") changeImage(-1);
     if (e.key === "ArrowRight") changeImage(1);
     if (e.key === "Escape") closeLightbox();
+    if (e.key === "+" || e.key === "=") zoomIn();
+    if (e.key === "-") zoomOut();
+    if (e.key === "0") resetZoom();
   });
 
   // Click outside image to close
