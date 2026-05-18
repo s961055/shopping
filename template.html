@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="pageTitle">商品詳情</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', 'Microsoft JhengHei', Arial, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      display: none; /* Hide until data is loaded */
+    }
+
+    header {
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      color: white;
+      padding: 32px 20px 28px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 60% 40%, rgba(255,255,255,.06) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .header-tag {
+      display: inline-block;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.25);
+      color: rgba(255,255,255,.85);
+      font-size: .75rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 3px 14px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      line-height: 1.4;
+      text-shadow: 0 2px 8px rgba(0,0,0,.2);
+    }
+
+    .header-badges {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .header-badge {
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.2);
+      color: white;
+      font-size: .75rem;
+      padding: 3px 12px;
+      border-radius: 20px;
+    }
+
+    .price-tag {
+      display: inline-block;
+      margin-top: 10px;
+      background: #e63946;
+      color: white;
+      padding: 6px 20px;
+      border-radius: 20px;
+      font-size: 1.4rem;
+      font-weight: bold;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 16px;
+    }
+
+    /* ── Lightbox ── */
+    .lightbox-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.88);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+    .lightbox-overlay.active { display: flex; }
+
+    .lightbox-overlay img {
+      max-width: 90vw;
+      max-height: 80vh;
+      border-radius: 8px;
+      object-fit: contain;
+      box-shadow: 0 8px 32px rgba(0,0,0,.5);
+    }
+
+    .lightbox-nav {
+      display: flex;
+      gap: 20px;
+      margin-top: 16px;
+    }
+
+    .lightbox-nav button, .lightbox-close {
+      background: rgba(255,255,255,.15);
+      border: none;
+      color: white;
+      font-size: 1.4rem;
+      padding: 8px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .lightbox-nav button:hover, .lightbox-close:hover { background: rgba(255,255,255,.3); }
+
+    .lightbox-close {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      font-size: 1.6rem;
+      padding: 4px 14px;
+    }
+
+    .lightbox-counter {
+      color: rgba(255,255,255,.7);
+      margin-top: 8px;
+      font-size: .9rem;
+    }
+
+    /* ── Gallery ── */
+    .gallery-section h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 14px;
+      border-left: 4px solid #e63946;
+      padding-left: 10px;
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 12px;
+    }
+
+    .gallery-item {
+      aspect-ratio: 1 / 1;
+      overflow: hidden;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.12);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .gallery-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform .35s ease;
+      display: block;
+    }
+
+    .gallery-item:hover img { transform: scale(1.06); }
+
+    .gallery-item .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .25s;
+    }
+
+    .gallery-item:hover .overlay { background: rgba(0,0,0,.25); }
+
+    .gallery-item .overlay span {
+      color: white;
+      font-size: 2rem;
+      opacity: 0;
+      transition: opacity .25s;
+    }
+
+    .gallery-item:hover .overlay span { opacity: 1; }
+
+    /* ── Desc ── */
+    .desc-section {
+      margin-top: 32px;
+    }
+
+    .desc-section h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 14px;
+      border-left: 4px solid #e63946;
+      padding-left: 10px;
+    }
+
+    .desc-card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.08);
+      line-height: 1.9;
+      white-space: pre-wrap;
+      font-size: .97rem;
+      color: #444;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #aaa;
+      font-size: .8rem;
+      margin-top: 40px;
+    }
+
+    .nav-back {
+      max-width: 960px;
+      margin: 20px auto 0;
+      padding: 0 16px;
+    }
+
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #302b63;
+      text-decoration: none;
+      font-size: .9rem;
+      font-weight: 600;
+      transition: opacity .2s;
+    }
+
+    .btn-back:hover {
+      opacity: .7;
+    }
+  </style>
+</head>
+<body>
+
+<div class="nav-back">
+  <a href="index.html" class="btn-back">‹ 返回首頁</a>
+</div>
+
+<header>
+  <div class="header-tag" id="headerTag"></div>
+  <h1 id="productName"></h1>
+  <div class="price-tag" id="priceTag"></div>
+  <div class="header-badges" id="headerBadges"></div>
+</header>
+
+<div class="container">
+  <!-- Gallery -->
+  <div class="gallery-section">
+    <h2>商品圖片</h2>
+    <div class="gallery-grid" id="gallery"></div>
+  </div>
+
+  <!-- Description -->
+  <div class="desc-section">
+    <h2>商品說明</h2>
+    <div class="desc-card" id="productDesc"></div>
+  </div>
+</div>
+
+<footer>© 2026 商品展示相簿</footer>
+
+<!-- Lightbox -->
+<div class="lightbox-overlay" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightbox-img" src="" alt="">
+  <div class="lightbox-nav">
+    <button onclick="changeImage(-1)">&#9664; 上一張</button>
+    <button onclick="changeImage(1)">下一張 &#9654;</button>
+  </div>
+  <div class="lightbox-counter" id="lightbox-counter"></div>
+</div>
+
+<script>
+  let productData = null;
+  let productId = "";
+  let images = [];
+  let currentIndex = 0;
+
+  async function init() {
+    const urlParams = new URLSearchParams(window.location.search);
+    productId = urlParams.get('id');
+
+    if (!productId) {
+      window.location.href = 'index.html';
+      return;
+    }
+
+    try {
+      const response = await fetch('data.json');
+      const data = await response.json();
+      productData = data[productId];
+
+      if (!productData) {
+        alert("找不到商品資料");
+        window.location.href = 'index.html';
+        return;
+      }
+
+      renderProduct();
+      document.body.style.display = 'block';
+    } catch (error) {
+      console.error("Error loading data:", error);
+      alert("載入資料失敗");
+    }
+  }
+
+  function renderProduct() {
+    document.title = productData.name;
+    document.getElementById('pageTitle').textContent = productData.name;
+    document.getElementById('headerTag').textContent = productData.brand;
+    document.getElementById('productName').innerHTML = productData.shortName || productData.name;
+    document.getElementById('priceTag').textContent = `💰 特價 $${productData.price}`;
+    document.getElementById('productDesc').textContent = productData.desc;
+
+    const badgesContainer = document.getElementById('headerBadges');
+    productData.tags.forEach(tag => {
+      const span = document.createElement('span');
+      span.className = 'header-badge';
+      span.textContent = tag;
+      badgesContainer.appendChild(span);
+    });
+
+    images = productData.images.map(img => `${productId}/${img}`);
+    const grid = document.getElementById("gallery");
+    images.forEach((src, i) => {
+      const item = document.createElement("div");
+      item.className = "gallery-item";
+      item.innerHTML = `
+        <img src="${src}" alt="商品圖片 ${i + 1}" loading="lazy">
+        <div class="overlay"><span>🔍</span></div>
+      `;
+      item.addEventListener("click", () => openLightbox(i));
+      grid.appendChild(item);
+    });
+  }
+
+  function openLightbox(index) {
+    currentIndex = index;
+    updateLightbox();
+    document.getElementById("lightbox").classList.add("active");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeLightbox() {
+    document.getElementById("lightbox").classList.remove("active");
+    document.body.style.overflow = "";
+  }
+
+  function changeImage(dir) {
+    currentIndex = (currentIndex + dir + images.length) % images.length;
+    updateLightbox();
+  }
+
+  function updateLightbox() {
+    document.getElementById("lightbox-img").src = images[currentIndex];
+    document.getElementById("lightbox-counter").textContent =
+      `${currentIndex + 1} / ${images.length}`;
+  }
+
+  // Keyboard support
+  document.addEventListener("keydown", e => {
+    if (!document.getElementById("lightbox").classList.contains("active")) return;
+    if (e.key === "ArrowLeft") changeImage(-1);
+    if (e.key === "ArrowRight") changeImage(1);
+    if (e.key === "Escape") closeLightbox();
+  });
+
+  // Click outside image to close
+  document.getElementById("lightbox").addEventListener("click", function(e) {
+    if (e.target === this) closeLightbox();
+  });
+
+  init();
+</script>
+</body>
+</html>

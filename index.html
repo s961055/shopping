@@ -496,94 +496,6 @@
   </div>
 
   <div class="product-grid" id="productGrid">
-
-    <!-- 商品 1 -->
-    <div class="product-card" data-name="冰絲涼感防曬外套 2026 新款 款式一 TNF The North Face SPF50+ 男女款 大尺碼" data-price="650">
-      <div class="card-thumb">
-        <img src="data1/S__15450175_0.jpg" alt="TNF 防曬外套 款式一">
-        <div class="card-ribbon">特價</div>
-      </div>
-      <div class="card-body">
-        <div class="card-brand">TNF · The North Face</div>
-        <div class="card-title">冰絲涼感防曬外套 2026 新款（款式一）</div>
-        <div class="card-tags">
-          <span class="tag">SPF50+</span>
-          <span class="tag">冰絲材質</span>
-          <span class="tag">男女款</span>
-          <span class="tag">大尺碼</span>
-        </div>
-        <div class="card-desc">
-          黑色・藍色・米杏・紫色・灰色，尺寸 S～4XL。
-          輕薄透氣，UVA 阻擋率 ≥ 99%，雙大口袋設計，情侶同款可搭配。
-        </div>
-        <div class="card-listing-time">上架時間：2026-05-17 23:56</div>
-        <div class="card-footer">
-          <div>
-            <div class="price">$650<span>$1,280</span></div>
-          </div>
-          <a href="data1/index.html" class="btn-detail">查看詳情 ›</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- 商品 2 -->
-    <div class="product-card" data-name="K1608 立體刺繡字母顯瘦魚骨短袖T恤 韓國東大門 大尺碼 韓國熱銷" data-price="390">
-      <div class="card-thumb">
-        <img src="data2/S__15450149_0.jpg" alt="K1608 東大門立體刺繡魚骨短袖T恤">
-        <div class="card-ribbon">特價</div>
-      </div>
-      <div class="card-body">
-        <div class="card-brand">🇰🇷 韓國東大門</div>
-        <div class="card-title">K1608 立體刺繡字母顯瘦魚骨短袖T恤</div>
-        <div class="card-tags">
-          <span class="tag">立體刺繡</span>
-          <span class="tag">魚骨顯瘦</span>
-          <span class="tag">大尺碼</span>
-          <span class="tag">韓國熱銷</span>
-        </div>
-        <div class="card-desc">
-          藍色・黑色，尺寸 M～4XL。
-          魚骨顯瘦版型剪裁，立體刺繡字母細節，透氣親膚面料，日常百搭。
-        </div>
-        <div class="card-listing-time">上架時間：2026-05-17 22:38</div>
-        <div class="card-footer">
-          <div>
-            <div class="price">$390</div>
-          </div>
-          <a href="data2/index.html" class="btn-detail">查看詳情 ›</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- 商品 3 -->
-    <div class="product-card" data-name="K1613 POLO刺繡小馬V領收腰顯瘦上衣 韓國東大門 精緻刺繡 大尺碼 韓國熱銷" data-price="390">
-      <div class="card-thumb">
-        <img src="data3/S__15450131_0.jpg" alt="K1613 POLO刺繡小馬V領收腰顯瘦上衣">
-        <div class="card-ribbon">特價</div>
-      </div>
-      <div class="card-body">
-        <div class="card-brand">🇰🇷 韓國東大門</div>
-        <div class="card-title">K1613 POLO刺繡小馬V領收腰顯瘦上衣</div>
-        <div class="card-tags">
-          <span class="tag">精緻刺繡</span>
-          <span class="tag">V領顯瘦</span>
-          <span class="tag">大尺碼</span>
-          <span class="tag">韓國熱銷</span>
-        </div>
-        <div class="card-desc">
-          白色・藍色，尺寸 M～4XL。
-          V領收腰顯瘦版型，POLO小馬精緻刺繡，柔軟透氣面料，通勤休閒百搭。
-        </div>
-        <div class="card-listing-time">上架時間：2026-05-17 23:05</div>
-        <div class="card-footer">
-          <div>
-            <div class="price">$390</div>
-          </div>
-          <a href="data3/index.html" class="btn-detail">查看詳情 ›</a>
-        </div>
-      </div>
-    </div>
-
     <div class="no-result" id="noResult">找不到符合條件的商品，請嘗試其他關鍵字或調整價格區間。</div>
   </div>
 
@@ -628,59 +540,95 @@
 <script>
   const PAGE_SIZE = 9;
   let currentPage = 1;
-  let filteredCards = [];
+  let allProducts = [];
+  let filteredProducts = [];
 
-  function getAllCards() {
-    return Array.from(document.querySelectorAll('#productGrid .product-card'));
+  async function loadProducts() {
+    try {
+      const response = await fetch('data.json');
+      const data = await response.json();
+      // Convert object to array and keep the key as 'id'
+      allProducts = Object.entries(data).map(([id, product]) => ({
+        id,
+        ...product
+      }));
+      filterProducts();
+    } catch (error) {
+      console.error("Error loading products:", error);
+      document.getElementById('productGrid').innerHTML = '<div style="text-align:center; padding: 40px; color: red;">載入商品失敗，請稍後再試。</div>';
+    }
   }
 
-  function applyFilter() {
-    const keyword = document.getElementById('searchName').value.trim().toLowerCase();
-    const minPrice = parseFloat(document.getElementById('priceMin').value) || 0;
-    const maxPrice = parseFloat(document.getElementById('priceMax').value) || Infinity;
-
-    filteredCards = getAllCards().filter(card => {
-      const name = card.dataset.name.toLowerCase();
-      const price = parseFloat(card.dataset.price);
-      return (keyword === '' || name.includes(keyword)) && price >= minPrice && price <= maxPrice;
-    });
-  }
-
-  function renderPage(page) {
+  function renderProducts(page) {
     currentPage = page;
-    const allCards = getAllCards();
+    const grid = document.getElementById('productGrid');
+    
+    // Clear existing cards (except no-result message)
+    const cards = grid.querySelectorAll('.product-card');
+    cards.forEach(card => card.remove());
 
     const start = (page - 1) * PAGE_SIZE;
     const end = start + PAGE_SIZE;
-    const pageCards = new Set(filteredCards.slice(start, end));
+    const pageProducts = filteredProducts.slice(start, end);
 
-    allCards.forEach(card => {
-      card.style.display = pageCards.has(card) ? '' : 'none';
+    pageProducts.forEach(product => {
+      const card = document.createElement('div');
+      card.className = 'product-card';
+      
+      const firstImage = `${product.id}/${product.images[0]}`;
+      const originalPriceHtml = product.originalPrice ? `<span>$${product.originalPrice.toLocaleString()}</span>` : '';
+      
+      let tagsHtml = '';
+      product.tags.forEach(tag => {
+        tagsHtml += `<span class="tag">${tag}</span>`;
+      });
+
+      card.innerHTML = `
+        <div class="card-thumb">
+          <img src="${firstImage}" alt="${product.name}">
+          ${product.ribbon ? `<div class="card-ribbon">${product.ribbon}</div>` : ''}
+        </div>
+        <div class="card-body">
+          <div class="card-brand">${product.brand}</div>
+          <div class="card-title">${product.shortName || product.name}</div>
+          <div class="card-tags">${tagsHtml}</div>
+          <div class="card-desc">${product.desc.split('\n')[0]}</div>
+          <div class="card-listing-time">上架時間：${product.listingTime}</div>
+          <div class="card-footer">
+            <div>
+              <div class="price">$${product.price.toLocaleString()}${originalPriceHtml}</div>
+            </div>
+            <a href="template.html?id=${product.id}" class="btn-detail">查看詳情 ›</a>
+          </div>
+        </div>
+      `;
+      grid.insertBefore(card, document.getElementById('noResult'));
     });
 
-    document.getElementById('noResult').style.display = filteredCards.length === 0 ? 'block' : 'none';
+    document.getElementById('noResult').style.display = filteredProducts.length === 0 ? 'block' : 'none';
     renderPagination();
   }
 
   function renderPagination() {
-    const total = Math.ceil(filteredCards.length / PAGE_SIZE);
+    const total = Math.ceil(filteredProducts.length / PAGE_SIZE);
     const container = document.getElementById('pagination');
     container.innerHTML = '';
 
-    if (total <= 1) return;
+    if (total <= 1 && filteredProducts.length > 0) return;
+    if (filteredProducts.length === 0) return;
 
     const prev = document.createElement('button');
     prev.className = 'page-btn';
     prev.textContent = '‹ 上一頁';
     prev.disabled = currentPage === 1;
-    prev.onclick = () => renderPage(currentPage - 1);
+    prev.onclick = () => renderProducts(currentPage - 1);
     container.appendChild(prev);
 
     for (let i = 1; i <= total; i++) {
       const btn = document.createElement('button');
       btn.className = 'page-btn' + (i === currentPage ? ' active' : '');
       btn.textContent = i;
-      btn.onclick = () => renderPage(i);
+      btn.onclick = () => renderProducts(i);
       container.appendChild(btn);
     }
 
@@ -688,31 +636,40 @@
     next.className = 'page-btn';
     next.textContent = '下一頁 ›';
     next.disabled = currentPage === total;
-    next.onclick = () => renderPage(currentPage + 1);
+    next.onclick = () => renderProducts(currentPage + 1);
     container.appendChild(next);
 
     const info = document.createElement('span');
     info.className = 'page-info';
-    info.textContent = `第 ${currentPage} / ${total} 頁・共 ${filteredCards.length} 件`;
+    info.textContent = `第 ${currentPage} / ${total} 頁・共 ${filteredProducts.length} 件`;
     container.appendChild(info);
   }
 
   function filterProducts() {
-    applyFilter();
-    renderPage(1);
+    const keyword = document.getElementById('searchName').value.trim().toLowerCase();
+    const minPrice = parseFloat(document.getElementById('priceMin').value) || 0;
+    const maxPrice = parseFloat(document.getElementById('priceMax').value) || Infinity;
+
+    filteredProducts = allProducts.filter(product => {
+      const nameMatch = product.name.toLowerCase().includes(keyword) || 
+                        product.brand.toLowerCase().includes(keyword) ||
+                        product.desc.toLowerCase().includes(keyword);
+      const priceMatch = product.price >= minPrice && product.price <= maxPrice;
+      return nameMatch && priceMatch;
+    });
+
+    renderProducts(1);
   }
 
   function resetFilter() {
     document.getElementById('searchName').value = '';
     document.getElementById('priceMin').value = '';
     document.getElementById('priceMax').value = '';
-    applyFilter();
-    renderPage(1);
+    filterProducts();
   }
 
   // 初始化
-  applyFilter();
-  renderPage(1);
+  loadProducts();
 
   // 按 Enter 觸發搜尋
   ['searchName', 'priceMin', 'priceMax'].forEach(id => {
