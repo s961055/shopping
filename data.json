@@ -5,7 +5,8 @@
     "faq": [
       {"title": "測試1", "answer": "AAAAAAAAAAAAAAAA"},
       {"title": "測試2", "answer": "BBBBBBBBBBBBBBBB"}
-    ]
+    ],
+	"email": "test@gmail.com"
   },
   "information": {
     "data1": {
