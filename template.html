@@ -312,7 +312,7 @@
     try {
       const response = await fetch('data.json');
       const data = await response.json();
-      productData = data[productId];
+      productData = data.information[productId];
 
       if (!productData) {
         alert("找不到商品資料");

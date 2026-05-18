@@ -448,6 +448,94 @@
       margin: 0 4px;
     }
 
+    /* ── Back to Top ── */
+    .back-to-top {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, #1a1a2e, #302b63);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      font-size: 1.5rem;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      transition: transform 0.2s, opacity 0.2s;
+      z-index: 1000;
+    }
+
+    .back-to-top:hover {
+      transform: scale(1.1);
+      opacity: 0.9;
+    }
+
+    /* ── FAQ Section ── */
+    .faq-section {
+      margin-top: 50px;
+      padding: 20px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    }
+
+    .faq-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .faq-item {
+      border-bottom: 1px solid #f0f0f0;
+      padding: 15px 0;
+    }
+
+    .faq-item:last-child {
+      border-bottom: none;
+    }
+
+    .faq-question {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #333;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .faq-question::after {
+      content: '▼';
+      font-size: 0.7rem;
+      color: #aaa;
+      transition: transform 0.3s;
+    }
+
+    .faq-item.active .faq-question::after {
+      transform: rotate(180deg);
+    }
+
+    .faq-answer {
+      font-size: 0.88rem;
+      color: #666;
+      margin-top: 10px;
+      display: none;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .faq-item.active .faq-answer {
+      display: block;
+    }
+
     /* ── Footer ── */
     footer {
       text-align: center;
@@ -502,6 +590,12 @@
   <!-- 分頁 -->
   <div class="pagination" id="pagination"></div>
 
+  <!-- FAQ 區塊 -->
+  <div class="faq-section" id="faqSection" style="display: none; margin-top: 40px;">
+    <div class="faq-title">🤔 常見問題 FAQ</div>
+    <div id="faqList"></div>
+  </div>
+
   <!-- Info strip -->
   <div class="info-strip">
     <div class="info-item">
@@ -537,6 +631,9 @@
 
 <footer>© 2026 夏日防曬外套專區 · 所有商品圖片僅供參考</footer>
 
+<!-- 返回頂部按鈕 -->
+<button id="backToTop" class="back-to-top" onclick="scrollToTop()" title="返回頂部">↑</button>
+
 <script>
   const PAGE_SIZE = 9;
   let currentPage = 1;
@@ -548,15 +645,41 @@
       const response = await fetch('data.json');
       const data = await response.json();
       // Convert object to array and keep the key as 'id'
-      allProducts = Object.entries(data).map(([id, product]) => ({
+      allProducts = Object.entries(data.information).map(([id, product]) => ({
         id,
         ...product
       }));
       filterProducts();
+
+      // 載入 FAQ
+      if (data.config && data.config.faq && data.config.faq.length > 0) {
+        renderFAQ(data.config.faq);
+      }
     } catch (error) {
       console.error("Error loading products:", error);
       document.getElementById('productGrid').innerHTML = '<div style="text-align:center; padding: 40px; color: red;">載入商品失敗，請稍後再試。</div>';
     }
+  }
+
+  function renderFAQ(faqData) {
+    const faqSection = document.getElementById('faqSection');
+    const faqList = document.getElementById('faqList');
+    faqList.innerHTML = '';
+
+    faqData.forEach(item => {
+      const faqItem = document.createElement('div');
+      faqItem.className = 'faq-item';
+      faqItem.innerHTML = `
+        <div class="faq-question">${item.title}</div>
+        <div class="faq-answer">${item.answer}</div>
+      `;
+      faqItem.querySelector('.faq-question').onclick = () => {
+        faqItem.classList.toggle('active');
+      };
+      faqList.appendChild(faqItem);
+    });
+
+    faqSection.style.display = 'block';
   }
 
   function renderProducts(page) {
@@ -584,10 +707,10 @@
       });
 
       card.innerHTML = `
-        <div class="card-thumb">
+        <a href="template.html?id=${product.id}" class="card-thumb">
           <img src="${firstImage}" alt="${product.name}">
           ${product.ribbon ? `<div class="card-ribbon">${product.ribbon}</div>` : ''}
-        </div>
+        </a>
         <div class="card-body">
           <div class="card-brand">${product.brand}</div>
           <div class="card-title">${product.shortName || product.name}</div>
@@ -677,6 +800,25 @@
       if (e.key === 'Enter') filterProducts();
     });
   });
+
+  // 返回頂部功能
+  const backToTopBtn = document.getElementById('backToTop');
+
+  window.onscroll = function() {
+    if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+      backToTopBtn.style.display = "flex";
+    } else {
+      backToTopBtn.style.display = "none";
+    }
+  };
+
+  function scrollToTop() {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  }
 </script>
+
 </body>
 </html>
