@@ -487,10 +487,28 @@
       font-size: 1.1rem;
       font-weight: 700;
       color: #1a1a2e;
-      margin-bottom: 20px;
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 10px;
+      cursor: pointer;
+      user-select: none;
+      padding: 4px 0;
+    }
+
+    .faq-title-arrow {
+      font-size: .7rem;
+      color: #aaa;
+      transition: transform .3s;
+      display: inline-block;
+    }
+
+    .faq-section.open .faq-title-arrow {
+      transform: rotate(180deg);
+    }
+
+    .faq-section.open .faq-title {
+      margin-bottom: 20px;
     }
 
     .faq-item {
@@ -592,8 +610,11 @@
 
   <!-- FAQ 區塊 -->
   <div class="faq-section" id="faqSection" style="display: none; margin-top: 40px;">
-    <div class="faq-title">🤔 常見問題 FAQ</div>
-    <div id="faqList"></div>
+    <div class="faq-title" onclick="toggleFAQ()">
+      <span>🤔 常見問題 FAQ</span>
+      <span class="faq-title-arrow">▼</span>
+    </div>
+    <div id="faqList" style="display: none;"></div>
   </div>
 
   <!-- Info strip -->
@@ -680,6 +701,14 @@
     });
 
     faqSection.style.display = 'block';
+    // faqList 預設隱藏，等使用者點擊後展開
+  }
+
+  function toggleFAQ() {
+    const faqSection = document.getElementById('faqSection');
+    const faqList = document.getElementById('faqList');
+    const isOpen = faqSection.classList.toggle('open');
+    faqList.style.display = isOpen ? 'block' : 'none';
   }
 
   function renderProducts(page) {
